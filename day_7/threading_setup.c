@@ -104,6 +104,44 @@ int main(int argc, char* argv[]) {
     }
 
     // TODO: Merge results
+    char* final_result = malloc(2 * file_size);
+    int final_pos = 0;
+    char current_char = '\0';
+    int current_count = 0;
+
+    for(int i = 0; i < num_threads; i++) {
+        for(int j = 0; j < thread_data[i].result_length; j+=5) {
+            char character = thread_data[i].result[j];
+            int count = *((int*)&thread_data[i].result[j + 1]);
+
+            if (current_char == character) {
+                current_count += count;
+            } else {
+                if (current_char != '\0') {
+                    final_result[final_pos++] = current_char;
+                    *((int*)&final_result[final_pos]) = current_count;
+                    final_pos += sizeof(int);
+                }
+                current_char = character;
+                current_count = count;
+            }
+        }
+    }
+
+    if (current_char != '\0') {
+        final_result[final_pos++] = current_char;
+        *((int*)&final_result[final_pos]) = current_count;
+        final_pos += sizeof(int);
+    }
+
+    // NOW print it properly (not as string!)
+    printf("Final result: ");
+    for(int i = 0; i < final_pos; i += 5) {
+        char character = final_result[i];
+        int count = *((int*)&final_result[i + 1]);
+        printf("%c%d", character, count);
+    }
+    printf("\n");
     
     fclose(fp);
     free(file);
